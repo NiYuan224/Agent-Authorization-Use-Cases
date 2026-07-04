@@ -43,6 +43,9 @@ informative:
   RFC8174:
   RFC7009:
   RFC6749:
+  RFC8693:
+  RFC9396:
+  I-D.song-oauth-ai-agent-collaborate-authz:
 
 
 --- abstract
@@ -209,7 +212,27 @@ This section explores different categories of use cases, providing a concrete ex
         *   **No Native Support for Chains:** A standard OAuth token represents a simple, two-party delegation (User -> Agent A). It cannot natively represent a multi-step chain (`User -> A -> B -> C`). While the `act` claim from [RFC8693] helps, there is no standard for how to nest these claims to create a verifiable, multi-hop chain. This is a major architectural gap.
         *   **Lack of Standardized Context Passing:** There is no standard field in an OAuth token to carry the `claim_id` securely through the process. Developers resort to custom claims in a JWT, which harms interoperability.
 
-### Use Case 6: Automated DNSSEC DS Record Maintenance Agent
+### Use Case 6: Coordinated Task Group
+
+*   **Scenario Description:** A coordinating agent decomposes a user's request into subtasks and assembles a group of specialized sub-agents to execute them. Unlike the delegation chain in Use Case 5, where each agent derives its authority from the previous agent hop by hop, here every member's authority stems from a single grant obtained centrally by the coordinator [I-D.song-oauth-ai-agent-collaborate-authz]. The execution order of subtasks (sequential, parallel, or mixed) is independent of this authorization structure.
+
+*   **Example:** A user asks a health assistant for real-time health advice. A leading agent resolves the request into three subtasks: collecting the user's health data, predicting the user's health status, and generating advice. It selects a sub-agent for each subtask, each needing access to different resource servers (a wearable data API, a prediction service, a guideline repository). Sub-agents may all be selected upfront, or incrementally during execution as intermediate results reveal which further subtasks are needed.
+
+*   **Authorization Requirements:**
+    *   **One Grant, Many Members:** The coordinator must be able to obtain authorization once, on behalf of the whole group, rather than each member running its own flow against the authorization server and the user.
+    *   **Member-Level Least Privilege:** Each member must be confined to its own subject-audience-scope binding within the group's overall authority.
+    *   **Late Binding of Members:** Members selected mid-execution must be able to receive authority under the existing grant without a full re-authorization round trip.
+    *   **Group Lifecycle:** When the task completes or the coordinator is compromised, the entire group's authority must be terminable as one unit.
+
+*   **Gap Analysis:**
+    *   **What Works (Partially):** The Client Credentials grant and Token Exchange [RFC8693] allow individual agents to obtain tokens, and Rich Authorization Requests [RFC9396] can express fine-grained permissions per request.
+    *   **What's Missing (The Gap):**
+        *   **Per-Member Authorization Does Not Scale:** N members individually authenticating and obtaining tokens for what is logically one user grant means N authorization server interactions and potentially N consent prompts for a single request. There is no standard way for one party to request authorization on behalf of an enumerated set of clients.
+        *   **No Group Construct in the Token Model:** Tokens describe one client acting for one subject. There is no standard representation of group membership, nor of per-member subject-audience-scope bindings under a common grant, that a resource server could verify.
+        *   **No Late Binding of Members:** Members that cannot be enumerated at grant time have no standard way to be admitted to the group's authority, for example via a verifiable task assignment bound to the original grant.
+        *   **No Group Lifecycle Management:** There is no standard way to terminate a group's authority atomically, nor an enforced rule that a member's effective permissions remain a subset of the group's.
+
+### Use Case 7: Automated DNSSEC DS Record Maintenance Agent
 
 *   **Scenario Description:** This case follows the multi-agent RRR (Registrant-Registrar-Registry) model defined in `draft-ietf-dnsop-ds-automation-09`. A corporate domain owner deploys chained agents to fully automate DS record updates during DNSSEC KSK rollovers, zone bootstrapping, and zone deletion, relying on CDS/CDNSKEY signals between child authoritative zones and parent registry systems.
 
@@ -234,7 +257,7 @@ This section explores different categories of use cases, providing a concrete ex
 
 ## Category 3: Security & Administrative Scenarios
 
-### Use Case 7: Automated Security Incident Response
+### Use Case 8: Automated Security Incident Response
 
 *   **Scenario Description:** A security agent detects a security threat and must take immediate, automated action to contain it.
 
@@ -264,6 +287,8 @@ The use cases above highlight several fundamental gaps between the needs of AI a
 
 4.  **Insufficient Revocation Mechanisms.** The single-token revocation API is inadequate. The lack of standardized APIs for task-level and bulk (per-user or per-client) revocation is a major operational and security deficiency.
 
+5.  **Authorization Is Modeled Per-Client, Not Per-Group.** OAuth has no notion of a set of clients acting as one task group under a single grant: no group membership representation, no admission of late-selected members, and no group-level lifecycle or atomic revocation.
+
 # Security Considerations
 
 As we design new authorization mechanisms for agents, security must be the primary concern. The autonomy of agents amplifies the risk of any vulnerability.
@@ -272,6 +297,7 @@ As we design new authorization mechanisms for agents, security must be the prima
 *   **Delegation Chain Vulnerabilities:** Without a standard for secure delegation chains, custom implementations are prone to "Confused Deputy" attacks, where an agent is tricked into misusing its authority.
 *   **Revocation Timeliness:** In a world of powerful, autonomous agents, the ability to instantly and completely revoke all permissions for a compromised user or agent is not a "nice-to-have"; it is an absolute necessity.
 *   **Non-Repudiation:** For enterprise and B2B scenarios, actions taken by agents must be cryptographically auditable and non-repudiable, creating a strong digital paper trail.
+*   **Coordinator as a Single Point of Authority:** In coordinated task groups, the leading agent both requests authorization on behalf of all members and assigns their tasks. If the coordinator is compromised, the blast radius covers the entire group; its authority to act as an applier for others must therefore be separately authenticated, authorized, and auditable.
 
 # IANA Considerations
 
@@ -293,3 +319,9 @@ The analysis and use cases in this document are derived from observations of eme
 
 [RFC8693]
 : Jones, M., Nadalin, A., Campbell, B., Ed., Bradley, J., and C. Mortimore, "OAuth 2.0 Token Exchange", RFC 8693, DOI 10.17487/RFC8693, January 2020, <https://www.rfc-editor.org/info/rfc8693>.
+
+[RFC9396]
+: Lodderstedt, T., Richer, J., and B. Campbell, "OAuth 2.0 Rich Authorization Requests", RFC 9396, DOI 10.17487/RFC9396, May 2023, <https://www.rfc-editor.org/info/rfc9396>.
+
+[I-D.song-oauth-ai-agent-collaborate-authz]
+: Song, Y., Li, L., Jiang, Y., and F. Liu, "OAuth2.0 Extension for Multi-AI Agent Collaboration", Work in Progress, Internet-Draft, draft-song-oauth-ai-agent-collaborate-authz-01, 28 February 2026, <https://datatracker.ietf.org/doc/html/draft-song-oauth-ai-agent-collaborate-authz-01>.
