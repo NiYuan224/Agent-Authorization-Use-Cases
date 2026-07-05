@@ -67,6 +67,7 @@ However, the landscape is rapidly evolving with the advent of sophisticated AI-d
 *   **Asynchronous & Long-Running Operations:** Tasks may run for hours, days, or indefinitely, often without direct, real-time supervision from the principal.
 *   **Dynamic & Emergent Needs:** The exact permissions required may not be known at the start of a task but emerge as the agent plans and executes its steps.
 *   **Composition & Chaining:** Agents may delegate sub-tasks to other agents, forming a chain of authority.
+*   **Cross-Domain**: Chained or composited task orchestration often require calling of resources in different administrative domains.
 
 This document does not propose new solutions or protocols. Instead, its purpose is to:
 *   Define the key actors and concepts in agent-based authorization scenarios.
@@ -189,7 +190,7 @@ This section explores different categories of use cases, providing a concrete ex
         *   **Architectural Mismatch:** OAuth is a framework for network-based delegated authorization. It is not designed to manage local, process-level OS permissions. There is a fundamental mismatch between the two models.
         *   **Lack of a Standard Bridge:** There is no standard protocol to connect an agent's high-level intent (often determined in the cloud) to a secure, fine-grained grant of local OS permissions on the device.
         *   **Over-Privileging by Default:** Due to the lack of a standard bridge, developers often resort to a dangerous workaround: the agent's local component is installed with broad, persistent permissions (e.g., running with the user's full rights or even as a system service). This completely bypasses the principle of least privilege and creates a significant security risk.
- 
+
 
 ## Category 2: Enterprise & Business Process Scenarios
 
@@ -257,9 +258,33 @@ This section explores different categories of use cases, providing a concrete ex
         *   **OAuth has no standardized task/bulk revocation. Securing DS automation via OAuth would require repetitive single-token revocation in incidents.
         *   **No reserved OAuth JWT claim for cross-agent audit IDs, breaking consistent compliance logging for DS automation.
 
+### Use Case 8: Managed Services
+
+*   **Scenario Description:** The managed service model refers to an integrated end-to-end managed service solution delivered by a prime service integrator through the aggregation of infrastructure and services from multiple sub-providers. End users interact with a single, unified resource platform instead of multiple separate sub-modules. However, coordinating resources across different administrative domains introduces complex authorization challenges. 
+
+*   **Example:**
+    *   Telecom operator delivers a managed global secure SD-WAN orchestration service, which requires coordination of many localized regional telecom operators/ISPs and security service providers.
+    *   Telecom operator delivers a managed smart home + security solution through a home-hub, which integrates controls over IPTV, streaming services, smart IoT (security cameras) etc.
+
+*   **Authorization Requirements:**
+    *   **Cross-domain Authorization:** The fast provisioning of an integrated service (take SD-WAN as an example) requires acquiring authorization from different service sub-providers in their respective administrative domains.
+    *   **Batched Authorization:** The fast provisioning of the integrated service requires requesting a batch of authorizations from different service sub-providers.
+    *   **Delegated Authorization:**
+        *   Prime service integrator may need to conditionally delegate network configuration modification privileges for specific branches to the on-site O&M teams of local sub-providers. This delegation MAY be hierarchical.
+        *   End-users are often times tenants that only have renting privileges instead of ownership rights. Thus technically the prime service integrator is delegating the access privileges to the end-user to access each modular sub-service. 
+
+*   **Gap Analysis:**
+    *   **What Works:**
+        *   **Cross-domain Single Authorization:** The OAuth allows cross-domain authorization through {{RFC7523}} OAuth 2.0 authorization grant and {{?I-D.ietf-oauth-identity-chaining}} Identity Chaining. But it MUST require one access token at a time.
+        *   **Single Domain Workflow:** The OAuth allows workflow orchestration through {{?I-D.ietf-oauth-transaction-tokens}} Transaction Token. It only allows workflow inside one trust domain.
+     *   **What's Missing (The Gap):**
+         *   **Batched Authorization:** How to request access permissions to a batch of resources from the user at once, while precisely delegating fine-grained privileges to the respective sub-agent responsible for executing each sub-task.
+         *   **Cross-domain Workflow:** How to request access permissions across different trust domains, while ensuring secure propagation of important contextual information (claims, caller identity, rich authorization contexts...).
+
+
 ## Category 3: Security & Administrative Scenarios
 
-### Use Case 8: Automated Security Incident Response
+### Use Case 9: Automated Security Incident Response
 
 *   **Scenario Description:** A security agent detects a security threat and must take immediate, automated action to contain it.
 
@@ -276,7 +301,7 @@ This section explores different categories of use cases, providing a concrete ex
     *   **What Works (Partially):** The OAuth Client Credentials grant is suitable for giving the security agent its own system-level identity and authority.
     *   **What's Missing (The Gap):**
         *   **Critically Inadequate Revocation API:** This is the most significant gap for this use case. The one-token-at-a-time revocation endpoint in [RFC7009] is completely insufficient for a security incident. The need to make potentially thousands of individual API calls to revoke tokens is too slow and unreliable during an active attack. The lack of a standardized bulk revocation API is a major operational and security failure point.
-
+                 
 # Summary of Major Gaps
 
 The use cases above highlight several fundamental gaps between the needs of AI agents and the capabilities of the standard OAuth 2.x framework:
