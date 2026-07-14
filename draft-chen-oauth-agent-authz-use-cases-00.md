@@ -225,7 +225,7 @@ Today her only practical option is to copy a static API key into the agent's env
 
 ## Category 2: Enterprise & Business Process Scenarios
 
-### Use Case 5: Complex Business Process Automation
+### Use Case 6: Complex Business Process Automation
 
 *   **Scenario Description:** A task is passed through a chain of specialized agents, each performing one step of a larger business process.
 
@@ -246,7 +246,7 @@ Today her only practical option is to copy a static API key into the agent's env
         *   **No Native Support for Chains:** A standard OAuth token represents a simple, two-party delegation (User -> Agent A). It cannot natively represent a multi-step chain (`User -> A -> B -> C`). While the `act` claim from [RFC8693] helps, there is no standard for how to nest these claims to create a verifiable, multi-hop chain. This is a major architectural gap.
         *   **Lack of Standardized Context Passing:** There is no standard field in an OAuth token to carry the `claim_id` securely through the process. Developers resort to custom claims in a JWT, which harms interoperability.
 
-### Use Case 6: Coordinated Task Group
+### Use Case 7: Coordinated Task Group
 
 *   **Scenario Description:** A coordinating agent decomposes a user's request into subtasks and assembles a group of specialized sub-agents to execute them. Unlike the delegation chain in Use Case 5, where each agent derives its authority from the previous agent hop by hop, here every member's authority stems from a single grant obtained centrally by the coordinator [I-D.song-oauth-ai-agent-collaborate-authz]. The execution order of subtasks (sequential, parallel, or mixed) is independent of this authorization structure.
 
@@ -266,7 +266,7 @@ Today her only practical option is to copy a static API key into the agent's env
         *   **No Late Binding of Members:** Members that cannot be enumerated at grant time have no standard way to be admitted to the group's authority, for example via a verifiable task assignment bound to the original grant.
         *   **No Group Lifecycle Management:** There is no standard way to terminate a group's authority atomically, nor an enforced rule that a member's effective permissions remain a subset of the group's.
 
-### Use Case 7: Automated DNSSEC DS Record Maintenance Agent
+### Use Case 8: Automated DNSSEC DS Record Maintenance Agent
 
 *   **Scenario Description:** This case follows the multi-agent RRR (Registrant-Registrar-Registry) model defined in `draft-ietf-dnsop-ds-automation-09`. A corporate domain owner deploys chained agents to fully automate DS record updates during DNSSEC KSK rollovers, zone bootstrapping, and zone deletion, relying on CDS/CDNSKEY signals between child authoritative zones and parent registry systems.
 
@@ -289,7 +289,7 @@ Today her only practical option is to copy a static API key into the agent's env
         *   **OAuth has no standardized task/bulk revocation. Securing DS automation via OAuth would require repetitive single-token revocation in incidents.
         *   **No reserved OAuth JWT claim for cross-agent audit IDs, breaking consistent compliance logging for DS automation.
 
-### Use Case 8: Managed Services
+### Use Case 9: Managed Services
 
 *   **Scenario Description:** The managed service model refers to an integrated end-to-end managed service solution delivered by a prime service integrator through the aggregation of infrastructure and services from multiple sub-providers. End users interact with a single, unified resource platform instead of multiple separate sub-modules. However, coordinating resources across different administrative domains introduces complex authorization challenges. 
 
@@ -315,7 +315,7 @@ Today her only practical option is to copy a static API key into the agent's env
 
 ## Category 3: Security & Administrative Scenarios
 
-### Use Case 9: Automated Security Incident Response
+### Use Case 10: Automated Security Incident Response
 
 *   **Scenario Description:** A security agent detects a security threat and must take immediate, automated action to contain it.
 
