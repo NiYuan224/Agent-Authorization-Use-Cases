@@ -250,7 +250,9 @@ Today her only practical option is to copy a static API key into the agent's env
 
 *   **Scenario Description:** A coordinating agent decomposes a user's request into subtasks and assembles a group of specialized sub-agents to execute them. Unlike the delegation chain in Use Case 5, where each agent derives its authority from the previous agent hop by hop, here every member's authority stems from a single grant obtained centrally by the coordinator [I-D.song-oauth-ai-agent-collaborate-authz]. The execution order of subtasks (sequential, parallel, or mixed) is independent of this authorization structure.
 
-*   **Example:** A user asks a health assistant for real-time health advice. A leading agent resolves the request into three subtasks: collecting the user's health data, predicting the user's health status, and generating advice. It selects a sub-agent for each subtask, each needing access to different resource servers (a wearable data API, a prediction service, a guideline repository). Sub-agents may all be selected upfront, or incrementally during execution as intermediate results reveal which further subtasks are needed.
+*   **Example1:** A user asks a health assistant for real-time health advice. A leading agent resolves the request into three subtasks: collecting the user's health data, predicting the user's health status, and generating advice. It selects a sub-agent for each subtask, each needing access to different resource servers (a wearable data API, a prediction service, a guideline repository). Sub-agents may all be selected upfront, or incrementally during execution as intermediate results reveal which further subtasks are needed.
+*   **Example2:** Cross-bank Coupon Agent of a leading payment company can coordinate multiple commercial banks' agents to compare the best promotional discount from all of the user's bank accounts for a single payment. It obtains a single batch authorization for query and payment permissions of all the user's bank accounts, then decomposes these permissions, restricting each sub-agent to query only its respective bank's promotional discounts.
+
 
 *   **Authorization Requirements:**
     *   **One Grant, Many Members:** The coordinator must be able to obtain authorization once, on behalf of the whole group, rather than each member running its own flow against the authorization server and the user.
@@ -259,7 +261,7 @@ Today her only practical option is to copy a static API key into the agent's env
     *   **Group Lifecycle:** When the task completes or the coordinator is compromised, the entire group's authority must be terminable as one unit.
 
 *   **Gap Analysis:**
-    *   **What Works (Partially):** The Client Credentials grant and Token Exchange [RFC8693] allow individual agents to obtain tokens, and Rich Authorization Requests [RFC9396] can express fine-grained permissions per request.
+    *   **What Works (Partially):** Token Exchange [RFC8693] defines the privilege delegation relationship via the `may_act` claim, but it only defines one actor and cannot link that actor to a specific subset of permissions. Rich Authorization Requests [RFC9396] can express fine-grained permissions per request，but cannot bind them to different actors. 
     *   **What's Missing (The Gap):**
         *   **Per-Member Authorization Does Not Scale:** N members individually authenticating and obtaining tokens for what is logically one user grant means N authorization server interactions and potentially N consent prompts for a single request. There is no standard way for one party to request authorization on behalf of an enumerated set of clients.
         *   **No Group Construct in the Token Model:** Tokens describe one client acting for one subject. There is no standard representation of group membership, nor of per-member subject-audience-scope bindings under a common grant, that a resource server could verify.
